@@ -24,9 +24,9 @@ filled to start applying, build it up as you go, and lead with the capabilities 
 are most confident explaining.
 -->
 
-**Name:** [YOUR NAME]
-**LinkedIn:** [linkedin.com/in/yourprofile]
-**GitHub:** [github.com/yourusername]
+**Name:** Kajeepan Sri Kanthan
+**LinkedIn:** 
+**GitHub:** github.com/srikanka
 **Status:** In progress
 
 ---
