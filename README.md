@@ -132,31 +132,14 @@ Auth0 (access management: OIDC, OAuth, SAML) handles external and app federation
 
 ## HR-Driven Identity Onboarding (Joiner)
 
-**The capability:** [In one or two sentences: an organization needs employee identities created automatically from its HR system, with no manual account creation.]
+Connected SimplifyHR's CSV source to midPoint using seven inbound mappings, Groovy email and activation transformations, and correlation on employee ID. Reconciliation created seven workforce identities, and all seven HR accounts are linked to their midPoint owners.
 
-**What I built:**
-[The SimplifyHR connector, the inbound attribute mappings including any Groovy, the correlation rule. A few sentences.]
+**[View the implementation, screenshots, and configuration artifacts](joiner-leaver/README.md).**
 
-**How it works:**
-```
-SimplifyHR (hr.csv)  ->  midPoint (inbound mappings, correlation)  ->  identities created
-```
-
-**The key concept I understood:**
-[Example: HR is the source of truth. midPoint reads from it and never writes back. Correlation prevents duplicate identities.]
-
-**Screenshots:**
-![Identities imported into midPoint](screenshots/joiner-midpoint-users.png)
-![Audit log showing automatic creation](screenshots/joiner-audit-log.png)
-
-**Artifacts:**
-[Link the SimplifyHR resource config and inbound mappings, for example artifacts/simplifyhr-resource.xml and artifacts/inbound-email-mapping.groovy]
-
-**Enterprise equivalent:**
-[The CSV connector maps to a Workday REST or SAP SuccessFactors HR connector in SailPoint or Saviynt.]
+The evidence includes the Users list, successful creation events in the reconciliation channel, and linked HR accounts. This stage covers HR-to-IGA onboarding; directory provisioning is a subsequent capability.
 
 **Resume bullet:**
-> [Your line.]
+> Configured a CSV-based HR source connector in midPoint with inbound attribute mappings, Groovy transformations, and correlation rules to import and deduplicate workforce identities.
 
 ---
 

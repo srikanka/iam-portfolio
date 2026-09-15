@@ -1,0 +1,194 @@
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="4497c2a2-fe1b-403c-a65b-49b25c4aa881">
+    <name>SimplifyHR</name>
+    <description>HR resource to map users from source to IGA</description>
+    <lifecycleState>active</lifecycleState>
+    <iteration>0</iteration>
+    <iterationToken/>
+    <connectorRef oid="57c00993-bc70-4420-bbf0-d4b23dff0876" relation="org:default" type="c:ConnectorType">
+        <!-- ConnId com.evolveum.polygon.connector.csv.CsvConnector v2.9 -->
+    </connectorRef>
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-csv/com.evolveum.polygon.connector.csv.CsvConnector">
+            <cfg:fieldDelimiter>,</cfg:fieldDelimiter>
+            <cfg:filePath>/opt/midpoint/var/import/hr.csv</cfg:filePath>
+            <cfg:nameAttribute>empid</cfg:nameAttribute>
+            <cfg:uniqueAttribute>empid</cfg:uniqueAttribute>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+    <schemaHandling>
+        <objectType id="5">
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Account</displayName>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>c:UserType</type>
+            </focus>
+            <attribute id="6">
+                <ref>ri:empid</ref>
+                <inbound id="7">
+                    <name>EmpID</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>name</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="8">
+                <ref>ri:firstname</ref>
+                <inbound id="9">
+                    <name>Email</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>import com.evolveum.midpoint.xml.ns._public.common.common_3.*
+import java.text.Normalizer
+
+def first = basic.getAttributeValue(account, 'firstname')
+def last  = basic.getAttributeValue(account, 'lastname')
+first = first == null ? '' : first.toString().trim()
+last  = last  == null ? '' : last.toString().trim()
+
+def deaccent = { s -&gt;
+    // decompose accented chars, strip the diacritic marks, then clean anything non-ascii
+    def n = Normalizer.normalize(s, Normalizer.Form.NFD)
+    n = n.replaceAll('\\p{InCombiningDiacriticalMarks}+', '')
+    // handle German-specific ones NFD doesn't split (ß, and ae/oe/ue if you want that convention)
+    n = n.replace('ß', 'ss')
+    // strip anything still not a-z, A-Z, 0-9
+    n = n.replaceAll('[^a-zA-Z0-9]', '')
+    return n
+}
+
+def email = (deaccent(first) + '.' + deaccent(last)).toLowerCase() + '@simplifytech.com'
+return email</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>emailAddress</path>
+                    </target>
+                </inbound>
+                <inbound id="10">
+                    <name>FirstName</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>givenName</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="11">
+                <ref>ri:lastname</ref>
+                <inbound id="12">
+                    <name>LastName</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>familyName</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="13">
+                <ref>ri:department</ref>
+                <inbound id="14">
+                    <name>Department</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>organizationalUnit</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="15">
+                <ref>ri:costcenter</ref>
+                <inbound id="16">
+                    <name>costcenter</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>costCenter</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="17">
+                <ref>ri:status</ref>
+                <inbound id="18">
+                    <name>Status</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+
+if (input == 'Active') {
+    return ActivationStatusType.ENABLED
+} else {
+    return ActivationStatusType.DISABLED
+}</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>activation/administrativeStatus</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <correlation>
+                <correlators>
+                    <items id="25">
+                        <name>account correlation</name>
+                        <enabled>true</enabled>
+                        <item id="26">
+                            <ref>name</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+            <synchronization>
+                <reaction id="19">
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize id="20"/>
+                    </actions>
+                </reaction>
+                <reaction id="21">
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link id="22"/>
+                    </actions>
+                </reaction>
+                <reaction id="23">
+                    <situation>unmatched</situation>
+                    <actions>
+                        <addFocus id="24"/>
+                    </actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+    <capabilities>
+        <native xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:schema/>
+            <cap:discoverConfiguration/>
+            <cap:liveSync/>
+            <cap:create/>
+            <cap:read>
+                <cap:returnDefaultAttributesOption>false</cap:returnDefaultAttributesOption>
+            </cap:read>
+            <cap:update>
+                <cap:addRemoveAttributeValues>true</cap:addRemoveAttributeValues>
+            </cap:update>
+            <cap:delete/>
+            <cap:testConnection/>
+            <cap:script>
+                <cap:host id="2">
+                    <cap:type>resource</cap:type>
+                </cap:host>
+                <cap:host id="3">
+                    <cap:type>connector</cap:type>
+                </cap:host>
+            </cap:script>
+        </native>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+</resource>
