@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Extracted from the live OpenLDAP resource on 2026-09-21.
+     Schema-handling excerpt, not a complete importable resource. -->
+<schemaHandling xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+        <objectType id="4">
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Account</displayName>
+            <delineation>
+                <objectClass>ri:inetOrgPerson</objectClass>
+            </delineation>
+            <focus>
+                <type>c:UserType</type>
+            </focus>
+            <attribute id="5">
+                <ref>ri:givenName</ref>
+                <outbound>
+                    <name>firstname</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>givenName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="6">
+                <ref>ri:sn</ref>
+                <outbound>
+                    <name>lastname</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>familyName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="7">
+                <ref>ri:cn</ref>
+                <outbound>
+                    <name>cn</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>givenName</path>
+                    </source>
+                    <source>
+                        <path>familyName</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>givenName + ' ' + familyName</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="8">
+                <ref>ri:dn</ref>
+                <outbound>
+                    <name>DN</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+if (user?.activation?.administrativeStatus == ActivationStatusType.DISABLED) {
+    return 'uid=' + name + ',ou=inactive,dc=simplifyiam,dc=com'
+} else {
+    return 'uid=' + name + ',ou=people,dc=simplifyiam,dc=com'
+}</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="9">
+                <ref>ri:mail</ref>
+                <outbound>
+                    <name>emailAddress</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>emailAddress</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="10">
+                <ref>ri:departmentNumber</ref>
+                <outbound>
+                    <name>costCenter</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>costCenter</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="11">
+                <ref>ri:employeeNumber</ref>
+                <outbound>
+                    <name>employeeNumber</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>name</path>
+                    </source>
+                </outbound>
+            </attribute>
+        </objectType>
+    </schemaHandling>

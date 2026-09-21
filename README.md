@@ -130,45 +130,22 @@ Auth0 (access management: OIDC, OAuth, SAML) handles external and app federation
 
 ---
 
-## HR-Driven Identity Onboarding (Joiner)
+## HR-Driven Onboarding and Directory Provisioning
 
-Connected SimplifyHR's CSV source to midPoint using seven inbound mappings, Groovy email and activation transformations, and correlation on employee ID. Reconciliation created seven workforce identities, and all seven HR accounts are linked to their midPoint owners.
+I connected SimplifyHR to midPoint and OpenLDAP to turn employee records into managed identities and directory accounts. I configured inbound and outbound attribute mappings, employee-ID correlation, and an Employee role that supplies the OpenLDAP account requirement.
 
-**[View the implementation, screenshots, and configuration artifacts](joiner-leaver/README.md).**
+**Verified result:** seven simulated employees (`1001–1007`) have directory accounts under `ou=people`, and all seven show **LINKED** to their midPoint owners.
 
-The evidence includes the Users list, successful creation events in the reconciliation channel, and linked HR accounts. This stage covers HR-to-IGA onboarding; directory provisioning is a subsequent capability.
-
-**Resume bullet:**
-> Configured a CSV-based HR source connector in midPoint with inbound attribute mappings, Groovy transformations, and correlation rules to import and deduplicate workforce identities.
-
----
-
-## Provisioning to a Target Directory
-
-**The capability:** [Describe it: turning an identity in the IGA platform into a real account in a target system, automatically.]
-
-**What I built:**
-[The OpenLDAP resource, the outbound mappings, the DN routing script, and the role inducement that triggers provisioning.]
-
-**How it works:**
-```
-midPoint (outbound mappings, DN routing)  ->  OpenLDAP connector  ->  accounts in ou=people
+```text
+SimplifyHR → midPoint identity → Employee role → OpenLDAP account
 ```
 
-**The key concept I understood:**
-[Example: the role is the provisioning trigger, not the resource. Without a role inducement pointing at the directory, no account is ever created. The chain is focus object -> role assignment -> role inducement -> resource construction -> account.]
+**[View the workflow, screenshots, troubleshooting, and configuration artifacts](joiner-leaver/README.md).**
 
-**Screenshots:**
-![Accounts provisioned in the directory](screenshots/provisioning-ldap-accounts.png)
-
-**Artifacts:**
-[Link the OpenLDAP resource config, outbound mappings, and DN routing script, for example artifacts/openldap-resource.xml and artifacts/dn-routing.groovy]
-
-**Enterprise equivalent:**
-[Access Profile with provisioning policy in SailPoint, entitlement provisioning rule in Saviynt.]
+The evidence includes the live directory, linked OpenLDAP accounts, and earlier HR reconciliation results. The lab also exposed a role-scoping issue: its broad eligibility condition included the administrator. I document that limitation alongside the result. Completed leaver testing is a separate next step.
 
 **Resume bullet:**
-> [Your line.]
+> Built and validated an HR-driven onboarding workflow with midPoint and OpenLDAP, using attribute mappings and role-based provisioning to create and link directory accounts for seven simulated employees.
 
 ---
 

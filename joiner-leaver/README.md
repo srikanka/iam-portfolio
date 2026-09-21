@@ -1,83 +1,82 @@
-# HR-driven identity onboarding
+# HR-driven account provisioning
 
-Import workforce identities from an authoritative HR source into midPoint, with employee-ID correlation and an auditable reconciliation process.
+I built an onboarding workflow that turns an employee record in SimplifyHR into a managed identity in midPoint and an account in OpenLDAP. I configured the connections, attribute mappings, and Employee role, then ran HR reconciliation to apply the rules without manually creating each directory account.
 
-## Use case
+**Result:** seven lab employees (`1001–1007`) have OpenLDAP accounts under `ou=people`, and all seven accounts show **LINKED** to their owners in midPoint. The screenshots below were captured on September 21, 2026.
 
-An organization needs employee identities created from HR records without manually re-entering each employee in its identity governance platform. This personal lab connects SimplifyHR's CSV source to midPoint and demonstrates the source-to-IGA stage of onboarding.
+## The problem this solves
+
+When someone joins an organization, HR records their details, but IT still needs to create the right accounts. Manually copying that information takes time and can introduce mistakes. This lab demonstrates how an identity governance and administration (IGA) platform can use HR data and a role policy to make account creation consistent and repeatable.
 
 ```text
-SimplifyHR (hr.csv)
-       |
-       | CSV connector reads employee records
-       v
-midPoint: inbound mappings + employee-ID correlation
-       |
-       v
-Workforce identities + linked HR accounts + audit records
+SimplifyHR                 midPoint                         OpenLDAP
+Employee records    →      Managed user identity     →      Directory account
+                           Employee role                    uid=1001,ou=people,...
+     HR source             Access decisions                 Target directory
 ```
 
-Inbound mappings translate source attributes into identity properties, such as first name, department, and activation status. Correlation matches the HR employee ID to midPoint's `name` so existing identities can be linked and synchronized rather than recreated. Provisioning to a directory is a subsequent stage: creating an identity in midPoint alone does not create a directory account.
+## How I built it
 
-## Configuration
+1. **Connected the HR source.** I imported employee details into midPoint and matched records using the employee ID, so existing identities could be updated instead of recreated.
+2. **Connected the directory.** I configured OpenLDAP as a target resource and defined the account type midPoint should create.
+3. **Mapped the account details.** I added seven outbound mappings for names, email, department, employee ID, and the account's directory address.
+4. **Made account creation role-based.** I enabled role auto-assignment and configured the Employee role to supply an OpenLDAP account through an inducement.
+5. **Verified the result.** After running SimplifyHR reconciliation, I checked the actual accounts in phpLDAPadmin and their ownership links in midPoint.
 
-| HR attribute | midPoint target | Transformation |
-| --- | --- | --- |
-| `empid` | `name` | As is |
-| `firstname` and `lastname` | `emailAddress` | Groovy normalizes names and constructs a lowercase email address |
-| `firstname` | `givenName` | As is |
-| `lastname` | `familyName` | As is |
-| `department` | `organizationalUnit` | As is |
-| `costcenter` | `costCenter` | As is |
-| `status` | `activation/administrativeStatus` | Groovy maps `Active` to `ENABLED`, other values to `DISABLED` |
+## Key concepts in plain language
 
-- Connector: `CsvConnector` v2.9; CSV path: `/opt/midpoint/var/import/hr.csv`.
-- Account name and unique identifier: `empid`.
-- Correlation: `name`, populated from the employee ID.
-- Reactions: **Linked → Synchronize**, **Unlinked → Link**, **Unmatched → Add focus**.
-- The Delete capability is disabled to protect HR rows from connector deletion. This setting alone does not disable every other write capability.
+**Outbound mappings** tell midPoint what information to write to the directory, such as copying a user's email into the LDAP `mail` attribute. **DN construction** builds the account's unique directory address, for example `uid=1001,ou=people,dc=simplifyiam,dc=com`. **Role-based account creation** means the Employee role carries the account requirement: when a user receives the role, midPoint has a reason to create their OpenLDAP account.
 
-## Evidence — September 15, 2026
+| Part | What it does in my lab |
+| --- | --- |
+| HR source | Supplies employee information |
+| Correlation | Matches an HR record to the correct midPoint user using employee ID |
+| Employee role | Defines who receives the directory account |
+| Inducement | Connects the role to the OpenLDAP account requirement |
+| Reconciliation | Reprocesses source records and applies the configured rules |
+| LINKED status | Shows that midPoint knows which user owns an external account |
 
-### Imported identities
+## Evidence
 
-![Seven imported workforce identities in midPoint](screenshots/midpoint-users.png)
+### Accounts exist in OpenLDAP
 
-The Users list contains identities **1001–1007**, alongside the built-in administrator. Each employee has one linked account and a populated email address. Full name and Personal Number are not mapped in this configuration; first and last names are stored separately as givenName and familyName.
+![Provisioned employee accounts under ou=people in phpLDAPadmin](screenshots/openldap-provisioned-accounts.png)
 
-### Automatic creation audit trail
+The directory contains employee accounts `1001–1007` under `ou=people`; opening `1001` shows the mapped name, department, email, and employee number.
 
-![Successful Add object events in the reconciliation channel](screenshots/audit-log.png)
+### Accounts are linked to their owners
 
-The audit view is filtered from September 15, 2026, with **Event type: Add object** and **Outcome: Success**. Seven execution events in the **Reconciliation** channel show creation of identities 1001–1007 at approximately **14:39:11 UTC**. The two earlier rows record creation of the resource and reconciliation task.
+![OpenLDAP accounts showing LINKED and their midPoint owners](screenshots/midpoint-openldap-linked.png)
 
-### HR account links
+The OpenLDAP Accounts view shows all seven employee accounts as **LINKED**, with the matching midPoint user in the Owner column.
 
-![All seven SimplifyHR accounts linked to midPoint owners](screenshots/linked-accounts.png)
+**What the extra account means:** the screenshots show eight accounts in total because `administrator` also received a directory account. The lab's auto-assignment condition checks whether a user is not disabled; it does not restrict membership to HR employees. This highlighted why role eligibility needs an explicit employee scope before using the rule in a real environment. The seven employee accounts are the onboarding result; the administrator is an additional lab account.
 
-SimplifyHR's Accounts view shows **LINKED** for all seven records, with an owner for each account.
+[Earlier HR onboarding evidence and mapping details](hr-onboarding-notes.md) show the imported identities, successful creation audit events, and linked HR records.
 
 ## Configuration artifacts
 
-- [SimplifyHR resource XML](artifacts/simplifyhr-resource.xml)
-- [Email expression](artifacts/inbound-email-mapping.groovy)
-- [Status expression](artifacts/inbound-status-mapping.groovy)
-- [Artifact notes](artifacts/README.md)
+- [OpenLDAP outbound mapping configuration](artifacts/openldap-outbound-mappings.xml) — the seven mappings extracted from my running resource, with connection credentials excluded.
+- [DN routing script](artifacts/dn-routing.groovy) — constructs the account's directory address from the user ID and status.
+- [SimplifyHR resource configuration](artifacts/simplifyhr-resource.xml) — the earlier HR import configuration.
+- [Artifact notes](artifacts/README.md) — explains what each file contains and how it fits into the lab.
 
-## Troubleshooting lesson
+## What I learned while troubleshooting
 
-The activation import initially failed with `Expected boolean type ... ActivationStatusType ... condition in mapping 'Status'`. The status-conversion script had been duplicated in both **Expression** and **Condition**. Removing the duplicate condition allowed reconciliation to create the identities.
+An identity in midPoint does not automatically mean an account exists in the directory. The role's inducement supplies that account requirement, and the outbound mappings supply its attributes.
 
-While preparing the evidence, the Email mapping also had its transformation duplicated in Condition. A mapping expression produces the target value; a condition must produce a Boolean. The corrected configuration keeps each transformation only in Expression. A subsequent reconciliation populated email addresses for all seven existing users without creating additional identities.
+I also investigated an inducement display error using the logs and raw XML. The resource reference contained a name filter but no resolved OID. Pointing it directly to OpenLDAP's resource OID established the reference. An OID identifies a midPoint object; it is separate from an employee ID such as `1001`.
 
-## Scope
+## Scope and next step
 
-This folder currently documents HR-to-midPoint onboarding. Directory provisioning and a live leaver demonstration will be added as those capabilities are implemented. The source lesson describes six employees; this lab has seven.
+This is a local Docker lab using simulated employees. It demonstrates the complete **joiner** path from HR to identity governance to directory provisioning. Account login and a completed leaver test are not demonstrated by these screenshots.
 
-## Resume bullet
+The DN script includes routing for disabled users to `ou=inactive`, while the role rule can also remove the account requirement when a user is disabled. My next validation is to test that combined leaver behavior and record the actual outcome.
 
-> Configured a CSV-based HR source connector in midPoint with inbound attribute mappings, Groovy transformations, and correlation rules to import and deduplicate workforce identities.
+## Resume summary
 
-## Learning source
+> Built and validated an HR-driven onboarding workflow with midPoint and OpenLDAP, using attribute mappings and role-based provisioning to create and link directory accounts for seven simulated employees.
 
-Built while following [SimplifyIAM — L3: Connecting SimplifyHR](https://www.skool.com/simplify-iam-6792/classroom/dc510113?md=fbceae818fe540599fe12e872d47f089). Screenshots show my local lab; the Groovy expressions follow the lesson's examples.
+## Learning reference
+
+Implemented in my own lab using [SimplifyIAM's HR integration](https://www.skool.com/simplify-iam-6792/classroom/dc510113?md=fbceae818fe540599fe12e872d47f089) and [target directory integration](https://www.skool.com/simplify-iam-6792/classroom/dc510113?md=c89709aa49b549fcab263375883db63a) lessons. The configuration and screenshots document my working environment; the Groovy scripts follow the lesson examples.
