@@ -33,7 +33,7 @@ are most confident explaining.
 
 ## What This Portfolio Shows
 
-I built a complete IAM environment from scratch using midPoint (IGA), a simulated HR source, OpenLDAP (target directory), and Auth0 (access management and federation). The environment runs locally and replicates how IAM works on a real enterprise engagement, from HR-triggered identity lifecycle through governance and certification, to customer identity and federation with live protocols.
+I am building a local IAM lab and documenting verified results. My completed evidence covers HR-driven onboarding, OpenLDAP provisioning, and the joiner/leaver lifecycle using SimplifyHR and midPoint. The remaining sections are a learning roadmap; placeholder sections are not claims of completed implementations.
 
 This repository documents my configuration, architectural decisions, and analysis for each capability I built. It is intended as portfolio evidence for IAM implementation and engineering roles.
 
@@ -66,8 +66,7 @@ This repository documents my configuration, architectural decisions, and analysi
 - [IAM Architecture and Stakeholder Mapping](#iam-architecture-and-stakeholder-mapping)
 
 **Identity Governance (IGA)**
-- [HR-Driven Identity Onboarding (Joiner)](#hr-driven-identity-onboarding-joiner)
-- [Provisioning to a Target Directory](#provisioning-to-a-target-directory)
+- [HR-Driven Onboarding and Directory Provisioning](#hr-driven-onboarding-and-directory-provisioning)
 - [The Joiner and Leaver Lifecycle](#the-joiner-and-leaver-lifecycle)
 - [Role-Based Access Control (RBAC)](#role-based-access-control-rbac)
 - [The Mover Process](#the-mover-process)
@@ -134,15 +133,15 @@ Auth0 (access management: OIDC, OAuth, SAML) handles external and app federation
 
 I connected SimplifyHR to midPoint and OpenLDAP to turn employee records into managed identities and directory accounts. I configured inbound and outbound attribute mappings, employee-ID correlation, and an Employee role that supplies the OpenLDAP account requirement.
 
-**Verified result:** seven simulated employees (`1001–1007`) have directory accounts under `ou=people`, and all seven show **LINKED** to their midPoint owners.
+**Initial result, September 21, 2026:** seven simulated employees (`1001–1007`) had directory accounts under `ou=people`, all **LINKED** to their midPoint owners. The lifecycle section below documents the later new hire and termination.
 
 ```text
 SimplifyHR → midPoint identity → Employee role → OpenLDAP account
 ```
 
-**[View the workflow, screenshots, troubleshooting, and configuration artifacts](joiner-leaver/README.md).**
+**[View the initial provisioning workflow, screenshots, and troubleshooting](joiner-leaver/directory-provisioning.md).**
 
-The evidence includes the live directory, linked OpenLDAP accounts, and earlier HR reconciliation results. The lab also exposed a role-scoping issue: its broad eligibility condition included the administrator. I document that limitation alongside the result. Completed leaver testing is a separate next step.
+The evidence includes the live directory, linked OpenLDAP accounts, and earlier HR reconciliation results. The lab also exposed a role-scoping issue: its broad eligibility condition included the administrator. I document that limitation alongside the result. The subsequent [joiner and leaver validation](joiner-leaver/README.md) documents the completed lifecycle exercise.
 
 **Resume bullet:**
 > Built and validated an HR-driven onboarding workflow with midPoint and OpenLDAP, using attribute mappings and role-based provisioning to create and link directory accounts for seven simulated employees.
@@ -151,26 +150,18 @@ The evidence includes the live directory, linked OpenLDAP accounts, and earlier 
 
 ## The Joiner and Leaver Lifecycle
 
-**The capability:** [Describe it: a new hire gets access automatically, and a departing employee loses it automatically, both driven from HR.]
+I validated HR-driven onboarding and offboarding across SimplifyHR, midPoint, and OpenLDAP. After adding John Wick (`1008`) and running reconciliation, his identity and directory account were provisioned. After terminating Oliver Bennett (`1006`) and reconciling, his midPoint identity was disabled and his LDAP account was absent from the active directory.
 
-**What I built:**
-[The live joiner (a new employee added in HR, provisioned automatically) and the live leaver (a termination that disables and removes access), with audit evidence for both.]
+**Verified September 23, 2026:** seven active employee accounts remain in LDAP, alongside a separate administrator account. Oliver's HR record, disabled midPoint identity, and timestamped history are retained. The inactive OU is empty; this run supports account removal rather than an archived LDAP account.
 
-**The key concept I understood:**
-[Example: on termination, disable and retain, do not delete. The identity and its full history stay for compliance, while active access is removed. Deleting destroys audit evidence.]
+**[View the complete lab, six screenshots, configuration artifacts, and findings](joiner-leaver/README.md).**
 
-**Screenshots:**
-![Joiner provisioned automatically](screenshots/joiner-new-hire.png)
-![Leaver disabled and removed from active accounts](screenshots/leaver-disabled.png)
+![Disabled leaver identity with retained audit history](joiner-leaver/screenshots/leaver-history.png)
 
-**Artifacts:**
-[Link the DN routing script that moves disabled accounts to ou=inactive, and the status mapping, for example artifacts/status-mapping.groovy]
-
-**Production note:**
-[Explain the difference between what the lab did and what production should do (disable and move to inactive vs delete), and why it matters for audit and forensics.]
+**Skills demonstrated:** source-to-target integration, inbound/outbound mappings, role-based provisioning, lifecycle verification, and audit evidence. HR changes and reconciliation were manually initiated; the configured processing automated the subsequent changes. Login denial and session revocation were not tested.
 
 **Resume bullet:**
-> [Your line.]
+> Built and validated HR-driven joiner and leaver workflows in a local midPoint/OpenLDAP lab, automating directory account provisioning and removal through reconciliation while retaining identity records and timestamped audit history.
 
 ---
 

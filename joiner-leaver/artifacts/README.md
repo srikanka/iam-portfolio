@@ -17,7 +17,7 @@ The scripts follow the [SimplifyIAM lesson](https://www.skool.com/simplify-iam-6
 
 `dn-routing.groovy` is the exact DN expression extracted from that configuration. Its source is the midPoint user's `name`, which holds the employee ID for HR users. It constructs a DN under `ou=people` unless the user is disabled, in which case it constructs one under `ou=inactive`.
 
-The DN script alone does not establish the final offboarding behavior. The Employee role's auto-assignment condition also stops matching disabled users, which can remove the account requirement. The portfolio evidence verifies onboarding; a combined leaver test remains a separate validation.
+The DN script alone does not establish the final offboarding behavior. The Employee role's auto-assignment condition also stops matching disabled users, which can remove the account requirement. The [September 23 lifecycle validation](../README.md) verifies the combined result: Oliver is disabled in midPoint and absent from the active directory, while the inactive OU is empty. This supports account removal rather than a verified move to the inactive OU; the midPoint identity and history remain retained.
 
 | midPoint source | LDAP target |
 | --- | --- |

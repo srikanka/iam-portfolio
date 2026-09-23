@@ -1,82 +1,114 @@
-# HR-driven account provisioning
+# HR-driven joiner and leaver lifecycle
 
-I built an onboarding workflow that turns an employee record in SimplifyHR into a managed identity in midPoint and an account in OpenLDAP. I configured the connections, attribute mappings, and Employee role, then ran HR reconciliation to apply the rules without manually creating each directory account.
+I built and validated an identity lifecycle workflow using **SimplifyHR → midPoint → OpenLDAP**. A new hire receives a managed identity and directory account through configured rules. When HR marks an employee as terminated, reconciliation disables the central identity and reevaluates the directory account requirement.
 
-**Result:** seven lab employees (`1001–1007`) have OpenLDAP accounts under `ou=people`, and all seven accounts show **LINKED** to their owners in midPoint. The screenshots below were captured on September 21, 2026.
+**Verified on September 23, 2026:** John Wick (`1008`) has a provisioned LDAP account; Oliver Bennett (`1006`) is disabled in midPoint and absent from the active LDAP directory. Oliver's identity and timestamped midPoint history remain available.
+
+This is a local Docker lab with simulated employees. I entered the HR changes and manually started reconciliation; midPoint handled the resulting identity and account changes. The evidence does not demonstrate a scheduled trigger or an authentication test.
 
 ## The problem this solves
 
-When someone joins an organization, HR records their details, but IT still needs to create the right accounts. Manually copying that information takes time and can introduce mistakes. This lab demonstrates how an identity governance and administration (IGA) platform can use HR data and a role policy to make account creation consistent and repeatable.
+New employees need consistent account provisioning. Departing employees need their access requirements removed promptly, with evidence of what happened. Handling these changes independently in every system creates opportunities for missing accounts, orphaned access, and incomplete records.
+
+HR supplies employment facts, midPoint evaluates access policy, and OpenLDAP receives the resulting account changes.
 
 ```text
 SimplifyHR                 midPoint                         OpenLDAP
-Employee records    →      Managed user identity     →      Directory account
-                           Employee role                    uid=1001,ou=people,...
-     HR source             Access decisions                 Target directory
+New active employee  →     Create identity + apply role  →   Provision account
+Terminated employee  →     Disable + reevaluate role    →   Remove account requirement
+                           Retain identity and history      Apply target changes
 ```
 
-## How I built it
+## What I implemented
 
-1. **Connected the HR source.** I imported employee details into midPoint and matched records using the employee ID, so existing identities could be updated instead of recreated.
-2. **Connected the directory.** I configured OpenLDAP as a target resource and defined the account type midPoint should create.
-3. **Mapped the account details.** I added seven outbound mappings for names, email, department, employee ID, and the account's directory address.
-4. **Made account creation role-based.** I enabled role auto-assignment and configured the Employee role to supply an OpenLDAP account through an inducement.
-5. **Verified the result.** After running SimplifyHR reconciliation, I checked the actual accounts in phpLDAPadmin and their ownership links in midPoint.
+- Connected the HR source and matched records using employee ID.
+- Configured inbound mappings, including HR status to midPoint activation status.
+- Connected OpenLDAP and mapped names, email, employee number, cost center, and distinguished name (DN).
+- Configured an Employee role whose inducement supplies the directory account requirement.
+- Tested a new hire and a termination, then checked HR, midPoint, the directory, and audit history together.
 
-## Key concepts in plain language
+[Earlier directory integration](directory-provisioning.md) documents the initial seven-employee provisioning result, resource-reference troubleshooting, and linked-account evidence. [HR onboarding notes](hr-onboarding-notes.md) cover the source integration.
 
-**Outbound mappings** tell midPoint what information to write to the directory, such as copying a user's email into the LDAP `mail` attribute. **DN construction** builds the account's unique directory address, for example `uid=1001,ou=people,dc=simplifyiam,dc=com`. **Role-based account creation** means the Employee role carries the account requirement: when a user receives the role, midPoint has a reason to create their OpenLDAP account.
+## Test cases and observed results
 
-| Part | What it does in my lab |
-| --- | --- |
-| HR source | Supplies employee information |
-| Correlation | Matches an HR record to the correct midPoint user using employee ID |
-| Employee role | Defines who receives the directory account |
-| Inducement | Connects the role to the OpenLDAP account requirement |
-| Reconciliation | Reprocesses source records and applies the configured rules |
-| LINKED status | Shows that midPoint knows which user owns an external account |
+| Case | HR input | midPoint result | Directory result |
+| --- | --- | --- | --- |
+| Joiner: John Wick, `1008` | New active employee, Operations | Enabled identity, one assignment, two projections/accounts; successful creation history | `uid=1008,ou=people,dc=simplifyiam,dc=com`, with mapped attributes |
+| Leaver: Oliver Bennett, `1006` | Status changed to Terminated | Disabled identity retained, zero assignments, one remaining projection/account; successful modification history | `uid=1006` absent from `ou=people`; `ou=inactive` empty |
 
-## Evidence
+**Dataset context:** my earlier lab already contained Noah Beam as `1007`, so John became `1008`. After offboarding, HR contains eight employees: seven active and one terminated. LDAP's `ou=people` contains seven employee entries (`1001–1005`, `1007`, `1008`) plus the separate administrator account: eight entries total.
 
-### Accounts exist in OpenLDAP
+The administrator entry reflects the broad role eligibility condition identified in the earlier lab. It is not counted as an employee. Scoping that rule explicitly to eligible HR identities is a remaining hardening task.
 
-![Provisioned employee accounts under ou=people in phpLDAPadmin](screenshots/openldap-provisioned-accounts.png)
+## Evidence from the running lab
 
-The directory contains employee accounts `1001–1007` under `ou=people`; opening `1001` shows the mapped name, department, email, and employee number.
+These screenshots show the state after the exercise. They are not reconstructed before-and-after images. The earlier integration screenshots provide the historical baseline.
 
-### Accounts are linked to their owners
+### 1. HR is the source of employment status
 
-![OpenLDAP accounts showing LINKED and their midPoint owners](screenshots/midpoint-openldap-linked.png)
+![SimplifyHR shows John Wick 1008 active and Oliver Bennett 1006 terminated](screenshots/lifecycle-hr-status.png)
 
-The OpenLDAP Accounts view shows all seven employee accounts as **LINKED**, with the matching midPoint user in the Owner column.
+Eight employee records remain in HR. John is Active; Oliver is Terminated. The leaver process preserves the source record.
 
-**What the extra account means:** the screenshots show eight accounts in total because `administrator` also received a directory account. The lab's auto-assignment condition checks whether a user is not disabled; it does not restrict membership to HR employees. This highlighted why role eligibility needs an explicit employee scope before using the rule in a real environment. The seven employee accounts are the onboarding result; the administrator is an additional lab account.
+### 2. midPoint reflects the lifecycle change
 
-[Earlier HR onboarding evidence and mapping details](hr-onboarding-notes.md) show the imported identities, successful creation audit events, and linked HR records.
+![midPoint users showing John with two accounts and Oliver disabled with one](screenshots/lifecycle-midpoint-users.png)
+
+John (`1008`) has two connected account records. Oliver (`1006`) has the disabled indicator and one remaining account record. Account counts represent connected resource records, not successful logins. The full-name column is unpopulated in this lab; the configured given/family names and email identify the users.
+
+### 3. The joiner exists in the target directory
+
+![John Wick's LDAP account and the active directory tree](screenshots/joiner-john-openldap.png)
+
+John's account contains the expected DN, full name, email, employee number `1008`, and cost center `OPS-001`. The expanded directory tree shows the seven remaining employee accounts and the administrator, with no `uid=1006`.
+
+### 4. Reconciliation recorded the joiner creation
+
+![John's midPoint history showing successful Add object events](screenshots/joiner-history.png)
+
+John's History view contains successful **Add object** entries through the **Reconciliation** channel at approximately **2026-09-23 14:18:34 UTC**. Two displayed audit rows are not evidence of two separate user identities.
+
+### 5. The leaver identity and history are retained
+
+![Oliver's disabled identity and retained creation and modification history](screenshots/leaver-history.png)
+
+Oliver remains a disabled midPoint user with zero assignments. Removing the History view's default Time filter reveals four successful reconciliation events, from his creation on September 15 through the September 23 modification at **14:20:41.322 UTC** associated with this leaver run.
+
+In this version, the equivalent per-user audit view for the lesson's “Records tab” is **Users → All users → 1006 → History**. A summary event demonstrates a recorded operation; it does not by itself detail every downstream action.
+
+### 6. The observed result was removal, not an inactive-OU archive
+
+![Empty inactive OU with Oliver absent from the active directory tree](screenshots/leaver-inactive-empty.png)
+
+The DN script can construct an address under `ou=inactive` when a user is disabled. Separately, the Employee role condition stops matching disabled users and can remove the account requirement. The final state—no Oliver under `ou=people`, an empty `ou=inactive`, and one remaining midPoint projection—supports LDAP account removal. It does **not** demonstrate a successful move to `ou=inactive`.
+
+## What this demonstrates to an employer
+
+- **Identity integration:** connecting an authoritative HR source, an IGA platform, and a target directory.
+- **Policy-driven provisioning:** connecting role eligibility and account requirements to attribute mappings.
+- **Lifecycle validation:** checking the source, central identity, target account, and audit record rather than relying only on a task completion message.
+- **Troubleshooting and judgment:** distinguishing the configured DN routing from the actual combined role-policy outcome, and accounting for dataset differences.
+- **Evidence-based documentation:** preserving screenshots, configuration excerpts, timestamps, and clear limits on the result.
 
 ## Configuration artifacts
 
-- [OpenLDAP outbound mapping configuration](artifacts/openldap-outbound-mappings.xml) — the seven mappings extracted from my running resource, with connection credentials excluded.
-- [DN routing script](artifacts/dn-routing.groovy) — constructs the account's directory address from the user ID and status.
-- [SimplifyHR resource configuration](artifacts/simplifyhr-resource.xml) — the earlier HR import configuration.
-- [Artifact notes](artifacts/README.md) — explains what each file contains and how it fits into the lab.
+- [HR resource configuration](artifacts/simplifyhr-resource.xml)
+- [Inbound status mapping](artifacts/inbound-status-mapping.groovy)
+- [Inbound email mapping](artifacts/inbound-email-mapping.groovy)
+- [OpenLDAP outbound mappings](artifacts/openldap-outbound-mappings.xml)
+- [DN routing script](artifacts/dn-routing.groovy)
+- [Artifact scope and reuse notes](artifacts/README.md)
 
-## What I learned while troubleshooting
+## Limits and next validation
 
-An identity in midPoint does not automatically mean an account exists in the directory. The role's inducement supplies that account requirement, and the outbound mappings supply its attributes.
+The lab verifies provisioning, a disabled central identity, removal from the active directory, and retained midPoint history. It does not verify login denial, revocation of existing application sessions, all downstream applications, or compliance with a retention standard. Moving an account into another OU alone would not establish authentication denial.
 
-I also investigated an inducement display error using the logs and raw XML. The resource reference contained a name filter but no resolved OID. Pointing it directly to OpenLDAP's resource OID established the reference. An OID identifies a midPoint object; it is separate from an employee ID such as `1001`.
+For a production design, I would define and test the required target-specific disable/retain/delete behavior, restrict role eligibility to workforce identities, and verify authentication and session outcomes. The retained central audit history and the retention of the target account itself are separate concerns.
 
-## Scope and next step
+## Resume bullet
 
-This is a local Docker lab using simulated employees. It demonstrates the complete **joiner** path from HR to identity governance to directory provisioning. Account login and a completed leaver test are not demonstrated by these screenshots.
-
-The DN script includes routing for disabled users to `ou=inactive`, while the role rule can also remove the account requirement when a user is disabled. My next validation is to test that combined leaver behavior and record the actual outcome.
-
-## Resume summary
-
-> Built and validated an HR-driven onboarding workflow with midPoint and OpenLDAP, using attribute mappings and role-based provisioning to create and link directory accounts for seven simulated employees.
+> Built and validated HR-driven joiner and leaver workflows in a local midPoint/OpenLDAP lab, automating directory account provisioning and removal through reconciliation while retaining identity records and timestamped audit history.
 
 ## Learning reference
 
-Implemented in my own lab using [SimplifyIAM's HR integration](https://www.skool.com/simplify-iam-6792/classroom/dc510113?md=fbceae818fe540599fe12e872d47f089) and [target directory integration](https://www.skool.com/simplify-iam-6792/classroom/dc510113?md=c89709aa49b549fcab263375883db63a) lessons. The configuration and screenshots document my working environment; the Groovy scripts follow the lesson examples.
+Implemented in my own environment using [SimplifyIAM's Joiner and Leaver Live lesson](https://www.skool.com/simplify-iam-6792/classroom/dc510113?md=8793a705f7c24c198d01862ce0b97b8a). The screenshots document my simulated lab data and observed results; configuration scripts follow the course examples.
