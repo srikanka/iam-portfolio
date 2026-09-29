@@ -1,0 +1,211 @@
+<schemaHandling xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+        <objectType id="4">
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Account</displayName>
+            <delineation>
+                <objectClass>ri:inetOrgPerson</objectClass>
+                <baseContext>
+                    <objectClass>ri:organizationalUnit</objectClass>
+                    <filter>
+                        <q:equal>
+                            <q:path>attributes/ri:dn</q:path>
+                            <q:value>ou=people,dc=simplifyiam,dc=com</q:value>
+                        </q:equal>
+                    </filter>
+                </baseContext>
+            </delineation>
+            <focus>
+                <type>c:UserType</type>
+            </focus>
+            <attribute id="5">
+                <ref>ri:givenName</ref>
+                <outbound>
+                    <name>firstname</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>givenName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="6">
+                <ref>ri:sn</ref>
+                <outbound>
+                    <name>lastname</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>familyName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="7">
+                <ref>ri:cn</ref>
+                <outbound>
+                    <name>cn</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>givenName</path>
+                    </source>
+                    <source>
+                        <path>familyName</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>givenName + ' ' + familyName</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="8">
+                <ref>ri:dn</ref>
+                <outbound>
+                    <name>DN</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+if (user?.activation?.administrativeStatus == ActivationStatusType.DISABLED) {
+    return 'uid=' + name + ',ou=inactive,dc=simplifyiam,dc=com'
+} else {
+    return 'uid=' + name + ',ou=people,dc=simplifyiam,dc=com'
+}</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="9">
+                <ref>ri:mail</ref>
+                <outbound>
+                    <name>emailAddress</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>emailAddress</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="10">
+                <ref>ri:departmentNumber</ref>
+                <outbound>
+                    <name>costCenter</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>costCenter</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="11">
+                <ref>ri:employeeNumber</ref>
+                <outbound>
+                    <name>employeeNumber</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>name</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <correlation>
+                <correlators>
+                    <items id="18">
+                        <name>account correlation</name>
+                        <enabled>true</enabled>
+                        <item id="19">
+                            <ref>name</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+            <synchronization>
+                <reaction id="12">
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize id="13"/>
+                    </actions>
+                </reaction>
+                <reaction id="14">
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link id="15"/>
+                    </actions>
+                </reaction>
+                <reaction id="16">
+                    <situation>unmatched</situation>
+                    <actions>
+                        <addFocus id="17"/>
+                    </actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+        <objectType id="22">
+            <kind>account</kind>
+            <intent>NHI</intent>
+            <displayName>Service Accounts</displayName>
+            <description>Link service accounts to their human owners</description>
+            <lifecycleState>active</lifecycleState>
+            <delineation>
+                <objectClass>ri:inetOrgPerson</objectClass>
+                <baseContext>
+                    <objectClass>ri:organizationalUnit</objectClass>
+                    <filter>
+                        <q:equal>
+                            <q:path>attributes/ri:dn</q:path>
+                            <q:value>ou=services,dc=simplifyiam,dc=com</q:value>
+                        </q:equal>
+                    </filter>
+                </baseContext>
+            </delineation>
+            <focus>
+                <type>c:UserType</type>
+            </focus>
+            <attribute id="23">
+                <ref>ri:carLicense</ref>
+                <inbound id="24">
+                    <name>ownter for tech accounts</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>name</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="25">
+                <ref>ri:cn</ref>
+                <inbound id="26">
+                    <name>nhi-name</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>additionalName</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <correlation>
+                <correlators>
+                    <items id="27">
+                        <name>nhi correlation</name>
+                        <enabled>true</enabled>
+                        <item id="28">
+                            <ref>name</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+            <synchronization>
+                <reaction id="29">
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize id="30"/>
+                    </actions>
+                </reaction>
+                <reaction id="31">
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link id="32"/>
+                    </actions>
+                </reaction>
+                <reaction id="33">
+                    <situation>unmatched</situation>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>

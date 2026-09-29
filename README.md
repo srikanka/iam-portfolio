@@ -33,7 +33,7 @@ are most confident explaining.
 
 ## What This Portfolio Shows
 
-I am building a local IAM lab and documenting verified results. My completed evidence covers HR-driven onboarding, OpenLDAP provisioning, and the joiner/leaver lifecycle using SimplifyHR and midPoint. The remaining sections are a learning roadmap; placeholder sections are not claims of completed implementations.
+I am building a local IAM lab and documenting verified results. My completed evidence covers HR-driven onboarding, OpenLDAP provisioning, the joiner/leaver lifecycle, and service-account ownership using SimplifyHR and midPoint. The remaining sections are a learning roadmap; placeholder sections are not claims of completed implementations.
 
 This repository documents my configuration, architectural decisions, and analysis for each capability I built. It is intended as portfolio evidence for IAM implementation and engineering roles.
 
@@ -68,6 +68,7 @@ This repository documents my configuration, architectural decisions, and analysi
 **Identity Governance (IGA)**
 - [HR-Driven Onboarding and Directory Provisioning](#hr-driven-onboarding-and-directory-provisioning)
 - [The Joiner and Leaver Lifecycle](#the-joiner-and-leaver-lifecycle)
+- [Service Account Ownership](#service-account-ownership)
 - [Role-Based Access Control (RBAC)](#role-based-access-control-rbac)
 - [The Mover Process](#the-mover-process)
 - [Access Request and Approval Workflow](#access-request-and-approval-workflow)
@@ -162,6 +163,16 @@ I validated HR-driven onboarding and offboarding across SimplifyHR, midPoint, an
 
 **Resume bullet:**
 > Built and validated HR-driven joiner and leaver workflows in a local midPoint/OpenLDAP lab, automating directory account provisioning and removal through reconciliation while retaining identity records and timestamped audit history.
+
+---
+
+## Service Account Ownership
+
+I linked the LDAP service account `svc-backup` to James Anderson (`1002`) in midPoint. Separate human and NHI account types keep the processing rules distinct; an inbound owner number identifies the responsible person.
+
+**Verified September 29, 2026:** `svc-backup` is **LINKED** to `1002`, whose projections show the HR record plus personal and service LDAP accounts.
+
+**[View the lab explanation, three screenshots, saved configuration, and limitations](non-human-identities/README.md).**
 
 ---
 

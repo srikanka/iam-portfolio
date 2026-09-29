@@ -29,6 +29,15 @@ polish, this is a working document.
 - What broke for me, and how I fixed it:
   [Your answer]
 
+### Lesson 7: Service account ownership — September 29, 2026
+
+- Linked `svc-backup` to James (`1002`) by matching LDAP `carLicense` to midPoint `name`.
+- Separated human and service accounts using OU scopes and default/NHI intents.
+- Verified one linked service account and three James projections: HR plus two LDAP accounts.
+- Learned that correlation finds the owner, while synchronization reactions decide whether to link or leave an account unmatched.
+- Documented the strong-versus-weak additionalName mapping difference and the unverified optional orphan test.
+- [Lab write-up and screenshots](non-human-identities/README.md) · [Step-by-step learning note](https://app.notion.com/p/3ea71b972dfd816b94edfa5def0aff47)
+
 ## Module 3: IGA, Mover and RBAC
 
 - What is the difference between an auto-assigned role and a manually requested role?
