@@ -57,6 +57,16 @@ polish, this is a working document.
 - Emma's OpenLDAP account stayed linked through the Employee role. LDAP group changes were not checked.
 - [Mover write-up and before/after screenshots](rbac-roles/README.md#the-mover-emma-moves-from-engineering-to-hr) · [Notion lab journal](https://app.notion.com/p/3fc71b972dfd8198bb9de6e5ad3bdebe)
 
+### Lesson 4: Access certification — October 17, 2026
+
+- Enabled Sophie (`1001`) as reviewer (End User + Reviewer roles, password), then built a one-stage campaign scoped to `name = "1005"` role assignments with automated remediation.
+- Sophie certified Employee and HR_Employee and revoked Contractor. After the stage closed, remediation removed Contractor from Emma.
+- What broke: Contractor stayed after the revoke because the 14-day stage was still open. Decisions only apply when the stage closes, so I closed it as administrator and remediation ran.
+- Learned how scope (whose access), included items (which access), reviewer (who decides) and remediation (what happens) shape a campaign. The reviewer was set by hand, not resolved from the manager attribute.
+- [Certification write-up and screenshots](access-certification/README.md) · [Notion lab journal](https://app.notion.com/p/3fc71b972dfd81389dbaeac3737b25a6)
+
+**Module 3 resume bullet:** Designed an RBAC model in midPoint with attribute-based auto-assigned and self-service requestable roles; automated the mover so a department change swapped roles in one reconciliation, then ran a manager access certification with automated remediation that revoked the stale access left behind.
+
 - What is the difference between an auto-assigned role and a manually requested role?
   [Your answer]
 - Why does mapping strength "strong" matter for the mover?

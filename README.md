@@ -33,7 +33,7 @@ are most confident explaining.
 
 ## What This Portfolio Shows
 
-I am building a local IAM lab and documenting verified results. My completed evidence covers HR-driven onboarding, OpenLDAP provisioning, the joiner/leaver lifecycle, service-account ownership, role-based access control, and the mover process using SimplifyHR and midPoint. The remaining sections are a learning roadmap; placeholder sections are not claims of completed implementations.
+I am building a local IAM lab and documenting verified results. My completed evidence covers HR-driven onboarding, OpenLDAP provisioning, the joiner/leaver lifecycle, service-account ownership, role-based access control, the mover process, and access certification using SimplifyHR and midPoint. The remaining sections are a learning roadmap; placeholder sections are not claims of completed implementations.
 
 This repository documents my configuration, architectural decisions, and analysis for each capability I built. It is intended as portfolio evidence for IAM implementation and engineering roles.
 
@@ -249,32 +249,27 @@ HR department change  ->  reconciliation  ->  strong auto-assign rules re-evalua
 
 ## Access Certification and the Governance Loop
 
-**The capability:** [Describe it: periodically, reviewers confirm or revoke the access people hold, catching what automated provisioning cannot reach.]
+After the mover, Emma still held **Contractor**, a requested role that automation correctly leaves alone. I ran a certification campaign scoped to her role assignments. Her manager, Sophie Müller (`1001`), certified Employee and HR_Employee and **revoked Contractor**, and automated remediation removed it.
 
-**What I built:**
-[The certification campaign, the reviewer, the review decisions, and the automated remediation that removed revoked access.]
+**Verified October 17, 2026:** campaign **Closed**, 2 accepted, 1 revoked, **1 remediated**. Emma now holds Employee and HR_Employee only, and the removal was made by midPoint's remediation process.
 
-**How it works:**
-```
-Certification campaign  ->  reviewer certifies or revokes each item
-  ->  automated remediation removes revoked access  ->  audit trail
+```text
+Mover leaves Contractor  ->  campaign: manager reviews 3 items  ->  Contractor revoked
+  ->  stage closed  ->  automated remediation removes it  ->  audit trail
 ```
 
-**The key concept I understood:**
-[Example: certification closes the governance loop. After a mover leaves stale access behind, certification is the mechanism that catches and removes it, with a timestamped record for audit.]
+| Campaign result | Emma after remediation |
+| --- | --- |
+| ![Campaign closed with 1 revoked and remediated item](access-certification/screenshots/campaign-closed-remediated.png) | ![Emma holds Employee and HR_Employee only](access-certification/screenshots/emma-after-remediation.png) |
 
-**Screenshots:**
-![Certification items under review](screenshots/certification-items.png)
-![Access revoked after review](screenshots/certification-revoked.png)
+**The key concept:** certification closes the governance loop. Automation handles predictable changes, people judge what still fits, and the system enforces their decision with a record. Decisions only take effect when the review stage closes.
 
-**Artifacts:**
-[Link the certification campaign definition if you exported it, for example artifacts/certification-campaign.xml]
+**[View the campaign design, three screenshots, definition XML, and findings](access-certification/README.md).**
 
-**Compliance angle:**
-[If you have a GRC or audit background, map events to controls, for example SOC 2 CC6.2 and CC6.3. If not, explain why certification matters for audit.]
+**Compliance angle:** periodic access reviews with documented removal are standard SOC 2 logical-access evidence (CC6.2 / CC6.3). The reviewer was set explicitly rather than resolved automatically from the manager attribute.
 
 **Resume bullet:**
-> [Your line.]
+> Built and ran an access certification campaign in midPoint with the employee's manager as reviewer and automated remediation, revoking stale access left by a department change and producing an auditable review-and-revoke trail.
 
 ---
 

@@ -1,0 +1,57 @@
+<!-- Exported from my local midPoint lab, October 17, 2026. Operational metadata removed for readability.
+     Excerpt for review: not a complete importable object. Contains no credentials. -->
+<accessCertificationDefinition xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      oid="53da684b-4091-4021-8a5b-0c6113d1e464">
+    <name>Mover Access Review - Post Department Change</name>
+    <description>Access certification triggered after department change from Engineering to HR</description>
+    <!-- Reviews direct assignments (roles a user holds) -->
+    <handlerUri>http://midpoint.evolveum.com/xml/ns/public/certification/handlers-3#direct-assignment</handlerUri>
+
+    <!-- WHOSE access: users matching name = 1005 (Emma Clarke, the mover). WHICH access: her role assignments. -->
+    <scopeDefinition xsi:type="c:AccessCertificationAssignmentReviewScopeType">
+        <objectType>UserType</objectType>
+        <searchFilter>
+            <q:text>name = "1005"</q:text>
+        </searchFilter>
+        <includeAssignments>true</includeAssignments>
+        <includeInducements>false</includeInducements>
+        <includeResources>false</includeResources>
+        <includeRoles>true</includeRoles>
+        <includeOrgs>false</includeOrgs>
+        <includeServices>false</includeServices>
+        <includeUsers>false</includeUsers>
+        <includePolicies>false</includePolicies>
+        <enabledItemsOnly>false</enabledItemsOnly>
+    </scopeDefinition>
+
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/> <!-- administrator -->
+
+    <!-- WHAT HAPPENS to revoked items: removed automatically when remediation runs after the stage closes -->
+    <remediationDefinition>
+        <style>automated</style>
+    </remediationDefinition>
+
+    <!-- WHO decides: one 14-day stage, reviewer set explicitly to Sophie Müller (1001), Emma's manager in HR -->
+    <stageDefinition id="1">
+        <number>1</number>
+        <name>Review by user managers</name>
+        <duration>P14D</duration>
+        <notifyOnlyWhenNoDecision>false</notifyOnlyWhenNoDecision>
+        <reviewerSpecification>
+            <useTargetOwner>false</useTargetOwner>
+            <useTargetApprover>false</useTargetApprover>
+            <useObjectOwner>false</useObjectOwner>
+            <useObjectApprover>false</useObjectApprover>
+            <defaultReviewerRef oid="da80896c-cc8d-4e62-806f-17ceab3cad91" relation="org:default" type="c:UserType"/> <!-- 1001 Sophie Müller -->
+        </reviewerSpecification>
+    </stageDefinition>
+
+    <!-- Any single revoke decision revokes the item -->
+    <reviewStrategy>
+        <outcomeStrategy>oneDenyDenies</outcomeStrategy>
+    </reviewStrategy>
+</accessCertificationDefinition>
