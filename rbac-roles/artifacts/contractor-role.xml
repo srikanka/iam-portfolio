@@ -1,0 +1,20 @@
+<!-- Exported from my local midPoint lab, October 2026. Operational metadata removed for readability.
+     Excerpt for review: not a complete importable object. Contains no credentials. -->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="c2485632-8d6a-490d-a524-8bedd8d395ca">
+    <name>Contractor</name>
+    <description>Manually requested role for contractor access, not auto-assigned, requires explicit request and approval</description>
+
+    <assignment id="1">
+        <targetRef oid="00000000-0000-0000-0000-000000000321" relation="org:default" type="c:ArchetypeType"/> <!-- Business role -->
+    </assignment>
+    <!-- Present on the role object itself (added during setup); it does not flow to members. Cleanup item. -->
+    <assignment id="2">
+        <targetRef oid="b8f0cc7f-121d-47be-9369-ae2a17d02c05" relation="org:default" type="c:RoleType"/> <!-- Employee -->
+    </assignment>
+
+    <!-- No autoassign block by design: this role is only granted through a self-service request.
+         No approval policy is configured yet, so requests are currently granted without an approval step. -->
+</role>

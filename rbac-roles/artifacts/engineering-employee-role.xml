@@ -1,0 +1,49 @@
+<!-- Exported from my local midPoint lab, October 2026. Operational metadata removed for readability.
+     Excerpt for review: not a complete importable object. Contains no credentials. -->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="ee3fdfdc-bb38-4b00-a0a6-903dd2e30052">
+    <name>Engineering_Employee</name>
+    <description>Assigned to all Engineering department employees</description>
+    <displayName>Engineering Employee</displayName>
+
+    <!-- Classifies this object as a Business role (who the person is, not a single app permission) -->
+    <assignment id="1">
+        <targetRef oid="00000000-0000-0000-0000-000000000321" relation="org:default" type="c:ArchetypeType"/> <!-- Business role -->
+    </assignment>
+    <!-- Present on the role object itself (added during setup); it does not flow to members. Cleanup item. -->
+    <assignment id="2">
+        <targetRef oid="b8f0cc7f-121d-47be-9369-ae2a17d02c05" relation="org:default" type="c:RoleType"/> <!-- Employee -->
+    </assignment>
+
+    <!-- What holders of this role receive: an OpenLDAP account of the standard human type -->
+    <inducement id="11">
+        <construction>
+            <resourceRef oid="38776c24-0584-4472-91db-178900581e35" relation="org:default" type="c:ResourceType"/> <!-- OpenLDAP -->
+            <kind>account</kind>
+            <intent>default</intent>
+        </construction>
+        <focusType>c:UserType</focusType>
+    </inducement>
+
+    <!-- Who receives this role: any user whose HR department is Engineering.
+         strong = re-evaluated on every recompute/reconciliation, so the role is also REMOVED when the department changes. -->
+    <autoassign>
+        <enabled>true</enabled>
+        <focus>
+            <mapping id="13">
+                <name>autoassign-engineering</name>
+                <strength>strong</strength>
+                <source>
+                    <path>organizationalUnit</path>
+                </source>
+                <condition>
+                    <script>
+                        <code>organizationalUnit == 'Engineering'</code>
+                    </script>
+                </condition>
+            </mapping>
+        </focus>
+    </autoassign>
+</role>

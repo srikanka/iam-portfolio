@@ -40,6 +40,15 @@ polish, this is a working document.
 
 ## Module 3: IGA, Mover and RBAC
 
+### Lesson 2: Building roles and auto-assignment — October 9, 2026 (verified October 17)
+
+- Built three business roles: Engineering_Employee (OpenLDAP inducement), HR_Employee (no inducement), and Contractor (requestable, no auto-assign).
+- Added strong auto-assign rules on `organizationalUnit`; one recompute assigned department roles that match HR for all eight users.
+- Requested Contractor for Emma (`1005`) via self-service. No approval case was created because no approval policy exists yet.
+- What broke: the Business role wizard only offers application roles. I added the OpenLDAP account through the role's Inducements → Resource tab. A duplicate role name and a duplicate inducement came from repeating steps, and I removed them.
+- Open items: department rule ignores terminated status (`1006`); stray Employee assignment on each role object.
+- [Lab write-up and screenshots](rbac-roles/README.md) · [Step-by-step learning note](https://app.notion.com/p/3f371b972dfd816bad92f2a2a6affcad)
+
 - What is the difference between an auto-assigned role and a manually requested role?
   [Your answer]
 - Why does mapping strength "strong" matter for the mover?

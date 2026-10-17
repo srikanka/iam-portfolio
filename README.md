@@ -33,7 +33,7 @@ are most confident explaining.
 
 ## What This Portfolio Shows
 
-I am building a local IAM lab and documenting verified results. My completed evidence covers HR-driven onboarding, OpenLDAP provisioning, the joiner/leaver lifecycle, and service-account ownership using SimplifyHR and midPoint. The remaining sections are a learning roadmap; placeholder sections are not claims of completed implementations.
+I am building a local IAM lab and documenting verified results. My completed evidence covers HR-driven onboarding, OpenLDAP provisioning, the joiner/leaver lifecycle, service-account ownership, and role-based access control using SimplifyHR and midPoint. The remaining sections are a learning roadmap; placeholder sections are not claims of completed implementations.
 
 This repository documents my configuration, architectural decisions, and analysis for each capability I built. It is intended as portfolio evidence for IAM implementation and engineering roles.
 
@@ -178,33 +178,23 @@ I linked the LDAP service account `svc-backup` to James Anderson (`1002`) in mid
 
 ## Role-Based Access Control (RBAC)
 
-**The capability:** [Describe it: access granted by role, not by hand, with roles assigned automatically where appropriate and requested where a human decision is needed.]
+I built three business roles driven by HR data. **Engineering_Employee** and **HR_Employee** assign themselves from the employee's department through strong auto-assign rules. **Contractor** can only be obtained through a self-service request. Engineering_Employee also grants an OpenLDAP account through a resource inducement.
 
-**What I built:**
-[Your department roles with auto-assignment, and a manually requested role. Explain the two patterns.]
-
-**The two RBAC patterns:**
+**Verified October 17, 2026:** Emma Clarke (`1005`) holds Employee, Engineering_Employee (auto-assigned on recompute) and Contractor (self-service request). Department-role membership matches the HR source for all eight lab users.
 
 | Pattern | Roles | Assigned when | Removed when |
 | --- | --- | --- | --- |
-| Auto-assigned | [e.g. Engineering_Employee, HR_Employee] | [condition true] | [condition false on next recompute] |
-| Manually requested | [e.g. Contractor] | [request plus approval] | [explicit revocation or certification] |
+| Auto-assigned | Engineering_Employee, HR_Employee | HR department matches the rule | Department changes (strong rule, rechecked on every recompute) |
+| Requested | Contractor | Self-service request | Explicit revocation or access review |
 
-**The key concept I understood:**
-[Example: strong-strength auto-assign rules mean the HR source always wins. A department change automatically removes the old role and adds the new one, but manually granted access persists until reviewed.]
+**[View the lab write-up, four screenshots, role definitions, and findings](rbac-roles/README.md).**
 
-**Screenshots:**
-![Roles list](screenshots/rbac-roles.png)
-![A user with auto-assigned and requested roles](screenshots/rbac-user-roles.png)
+![Emma Clarke's assignments: Contractor, Employee, Engineering Employee](rbac-roles/screenshots/emma-assignments.png)
 
-**Artifacts:**
-[Link your role definitions with autoassign blocks, for example artifacts/engineering-employee-role.xml and artifacts/hr-employee-role.xml]
-
-**Enterprise equivalent:**
-[Birthright roles and lifecycle event rules in SailPoint; Role Assignment Policy in Saviynt; Lifecycle Workflows in Entra ID Governance.]
+**Skills demonstrated:** attribute-based role assignment, resource inducements, recompute vs reconciliation, and self-service requests. No approval policy is configured yet, so the request was granted without an approval step; the mover swap is validated in the next lab.
 
 **Resume bullet:**
-> [Your line.]
+> Designed and implemented an RBAC model in midPoint with attribute-based automatic role assignment using role-level auto-assign rules and a self-service access request flow; verified role membership for all users against the HR source.
 
 ---
 
