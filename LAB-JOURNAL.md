@@ -49,6 +49,14 @@ polish, this is a working document.
 - Open items: department rule ignores terminated status (`1006`); stray Employee assignment on each role object.
 - [Lab write-up and screenshots](rbac-roles/README.md) · [Step-by-step learning note](https://app.notion.com/p/3f371b972dfd816bad92f2a2a6affcad)
 
+### Lesson 3: The mover fires — October 17, 2026
+
+- Changed Emma (`1005`) from Engineering to HR in SimplifyHR (cost center HR-002), then ran the SimplifyHR reconciliation.
+- Result: Engineering_Employee removed, HR_Employee added, Employee and Contractor kept, recorded as one audited *Modify object* event (Reconciliation, Success).
+- Learned that the swap only works because the auto-assign rules are **strong**. Requested access (Contractor) survives a move by design, which is the leftover access that certification must catch.
+- Emma's OpenLDAP account stayed linked through the Employee role. LDAP group changes were not checked.
+- [Mover write-up and before/after screenshots](rbac-roles/README.md#the-mover-emma-moves-from-engineering-to-hr) · [Notion lab journal](https://app.notion.com/p/3fc71b972dfd8198bb9de6e5ad3bdebe)
+
 - What is the difference between an auto-assigned role and a manually requested role?
   [Your answer]
 - Why does mapping strength "strong" matter for the mover?

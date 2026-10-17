@@ -33,7 +33,7 @@ are most confident explaining.
 
 ## What This Portfolio Shows
 
-I am building a local IAM lab and documenting verified results. My completed evidence covers HR-driven onboarding, OpenLDAP provisioning, the joiner/leaver lifecycle, service-account ownership, and role-based access control using SimplifyHR and midPoint. The remaining sections are a learning roadmap; placeholder sections are not claims of completed implementations.
+I am building a local IAM lab and documenting verified results. My completed evidence covers HR-driven onboarding, OpenLDAP provisioning, the joiner/leaver lifecycle, service-account ownership, role-based access control, and the mover process using SimplifyHR and midPoint. The remaining sections are a learning roadmap; placeholder sections are not claims of completed implementations.
 
 This repository documents my configuration, architectural decisions, and analysis for each capability I built. It is intended as portfolio evidence for IAM implementation and engineering roles.
 
@@ -180,7 +180,7 @@ I linked the LDAP service account `svc-backup` to James Anderson (`1002`) in mid
 
 I built three business roles driven by HR data. **Engineering_Employee** and **HR_Employee** assign themselves from the employee's department through strong auto-assign rules. **Contractor** can only be obtained through a self-service request. Engineering_Employee also grants an OpenLDAP account through a resource inducement.
 
-**Verified October 17, 2026:** Emma Clarke (`1005`) holds Employee, Engineering_Employee (auto-assigned on recompute) and Contractor (self-service request). Department-role membership matches the HR source for all eight lab users.
+**Verified October 17, 2026:** before the mover lab, Emma Clarke (`1005`) held Employee, Engineering_Employee (auto-assigned on recompute) and Contractor (self-service request). Department-role membership matched the HR source for all eight lab users.
 
 | Pattern | Roles | Assigned when | Removed when |
 | --- | --- | --- | --- |
@@ -191,7 +191,7 @@ I built three business roles driven by HR data. **Engineering_Employee** and **H
 
 ![Emma Clarke's assignments: Contractor, Employee, Engineering Employee](rbac-roles/screenshots/emma-assignments.png)
 
-**Skills demonstrated:** attribute-based role assignment, resource inducements, recompute vs reconciliation, and self-service requests. No approval policy is configured yet, so the request was granted without an approval step; the mover swap is validated in the next lab.
+**Skills demonstrated:** attribute-based role assignment, resource inducements, recompute vs reconciliation, and self-service requests. No approval policy is configured yet, so the request was granted without an approval step. The mover swap is validated [below](#the-mover-process).
 
 **Resume bullet:**
 > Designed and implemented an RBAC model in midPoint with attribute-based automatic role assignment using role-level auto-assign rules and a self-service access request flow; verified role membership for all users against the HR source.
@@ -200,32 +200,25 @@ I built three business roles driven by HR data. **Engineering_Employee** and **H
 
 ## The Mover Process
 
-**The capability:** [Describe it: when someone changes department, their old access is removed and their new access is granted, automatically.]
+I moved Emma Clarke (`1005`) from Engineering to HR in SimplifyHR and ran one reconciliation. midPoint updated her department and swapped her roles automatically: **Engineering_Employee removed, HR_Employee added, Employee and Contractor kept.**
 
-**What I built:**
-[The department change in HR, the reconciliation, and the role delta that followed. Note what stayed (manually granted access) and what changed.]
+**Verified October 17, 2026:** before and after screenshots, plus one audited *Modify object* event (channel Reconciliation, outcome Success). Her OpenLDAP account stayed linked through the Employee role.
 
-**How it works:**
-```
-HR department change  ->  reconciliation  ->  auto-assign rules re-evaluate
-  old department role removed, new department role added, manual roles stay
+```text
+HR department change  ->  reconciliation  ->  strong auto-assign rules re-evaluate
+  Engineering_Employee removed, HR_Employee added, Employee + Contractor kept
 ```
 
-**The key concept I understood:**
-[Example: the mover is riskier than the joiner because the person carries their history. Manually granted access does not disappear on a move; it persists until a review catches it. That is why certification exists.]
+| Before | After |
+| --- | --- |
+| ![Before: Engineering Employee](rbac-roles/screenshots/emma-assignments.png) | ![After: HR_Employee](rbac-roles/screenshots/mover-emma-after.png) |
 
-**Screenshots:**
-![Roles before the mover](screenshots/mover-before.png)
-![Roles after the mover](screenshots/mover-after.png)
+**The key concept:** the mover works only because the department rules are **strong**, which means they're rechecked and enforced every time. Manually requested access (Contractor) correctly survives the move, which is exactly the leftover access that access certification must catch next.
 
-**Artifacts:**
-[Reference the same role artifacts; the strong-strength condition is what makes the mover work.]
-
-**Enterprise equivalent:**
-[Lifecycle event / mover workflow in SailPoint or Entra ID Governance.]
+**[View the mover walkthrough and evidence](rbac-roles/README.md#the-mover-emma-moves-from-engineering-to-hr).**
 
 **Resume bullet:**
-> [Your line.]
+> Implemented an automated mover process in midPoint using strong role-level auto-assign mappings, recalculating role assignments on department change while correctly preserving manually granted access.
 
 ---
 
